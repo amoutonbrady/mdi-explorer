@@ -1,10 +1,23 @@
 import * as Comlink from 'comlink';
+import { createSignal } from 'solid-js';
 
-function filter(icons: string[][], search: string) {
+const [icons, setIcons] = createSignal([]);
+let cachedSearch = 'NOT_INIT';
+let cachedFilteredIcons = [];
+
+function filter(search: string, page: number, perPage: number) {
   const res = [];
+  const start = page * perPage;
 
-  for (let i = 0; i < icons.length; i++) {
-    const [name, path] = icons[i];
+  if (cachedSearch === search) {
+    return [
+      cachedFilteredIcons.slice(start, start + perPage),
+      cachedFilteredIcons.length,
+    ];
+  }
+
+  for (let i = 0; i < icons().length; i++) {
+    const [name, path] = icons()[i];
     if (!name.toLocaleLowerCase().includes(search)) continue;
 
     res.push([
@@ -19,11 +32,15 @@ function filter(icons: string[][], search: string) {
     ]);
   }
 
-  return res;
+  cachedSearch = search;
+  cachedFilteredIcons = res;
+
+  return [res.slice(start, start + perPage), res.length];
 }
 
-Comlink.expose({ filter });
+Comlink.expose({ filter, setIcons });
 
-export type WorkerFunction = {
+export type MDIWorker = {
   filter: typeof filter;
+  setIcons: typeof setIcons;
 };
