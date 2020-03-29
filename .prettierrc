@@ -1,9 +1,9 @@
 {
-	"htmlWhitespaceSensitivity": "ignore",
-	"semi": true,
-	"useTabs": true,
-	"trailingComma": "all",
-	"tabWidth": 4,
-	"singleQuote": true,
-	"endOfLine": "lf"
+  "htmlWhitespaceSensitivity": "ignore",
+  "semi": true,
+  "useTabs": false,
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "singleQuote": true,
+  "endOfLine": "lf"
 }

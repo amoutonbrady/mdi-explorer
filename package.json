@@ -1,25 +1,25 @@
 {
-	"name": "mdi-explorer",
-	"version": "1.0.0",
-	"license": "MIT",
-	"scripts": {
-		"dev": "parcel src/index.html",
-		"build": "parcel build src/index.html"
-	},
-	"devDependencies": {
-		"@babel/core": "^7.9.0",
-		"@babel/preset-typescript": "^7.9.0",
-		"@fullhuman/postcss-purgecss": "^2.1.0",
-		"babel-plugin-jsx-dom-expressions": "^0.17.1",
-		"babel-preset-solid": "^0.17.0",
-		"parcel": "^2.0.0-nightly.183",
-		"prettier": "^2.0.2",
-		"tailwindcss": "^1.2.0",
-		"typescript": "^3.9.0-beta"
-	},
-	"dependencies": {
-		"@mdi/js": "^5.0.45",
-		"comlink": "^4.2.0",
-		"solid-js": "^0.17.1"
-	}
+  "name": "mdi-explorer",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-typescript": "^7.9.0",
+    "@fullhuman/postcss-purgecss": "^2.1.0",
+    "babel-plugin-jsx-dom-expressions": "^0.17.1",
+    "babel-preset-solid": "^0.17.0",
+    "parcel": "^2.0.0-nightly.183",
+    "prettier": "^2.0.2",
+    "tailwindcss": "^1.2.0",
+    "typescript": "^3.9.0-beta"
+  },
+  "dependencies": {
+    "@mdi/js": "^5.0.45",
+    "comlink": "^4.2.0",
+    "solid-js": "^0.17.1"
+  }
 }
