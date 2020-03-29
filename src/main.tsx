@@ -10,6 +10,7 @@ import {
 
 import { Icon } from './components/icon';
 import { WorkerFunction } from './filter.worker';
+import { Notification } from './components/notification';
 
 type EventFromInput = InputEvent & {
   currentTarget: HTMLInputElement;
@@ -79,8 +80,8 @@ function App() {
       <h1 class="text-center text-4xl font-semibold">MDI Explorer</h1>
 
       <input
-        onInput={updateSearch}
         value={state.search}
+        onInput={updateSearch}
         class="uppercase border border-gray-700 bg-transparent rounded px-4 py-2 w-full mt-6 bg-gray-800 top-6 sticky z-20"
         placeholder="Search an icon..."
       />
@@ -99,22 +100,14 @@ function App() {
               <Icon path={path} id={id} class="w-full" />
               <p
                 innerHTML={name}
-                class="text-sm font-semibold absolute  z-20 top-full left-1/2 -translate-x-1/2 transform translate-y-2 bg-gray-600 rounded shadow border-gray-900 px-3 py-2 group-hover:block group-active:block hidden"
+                class="text-sm font-semibold absolute z-20 top-full left-1/2 -translate-x-1/2 transform translate-y-2 bg-gray-600 rounded shadow border-gray-900 px-3 py-2 group-hover:block group-active:block hidden"
               ></p>
             </button>
           )}
         </For>
       </section>
 
-      <p
-        class="absolute top-6 right-6 px-3 py-2 font-semibold bg-green-200 text-green-800 border border-green-800 rounded shadow transition duration-300 transform z-30"
-        classList={{
-          'scale-1 opacity-1': state.showCopiedText,
-          'scale-0 opacity-0': !state.showCopiedText,
-        }}
-      >
-        Icon copied to clipboard!
-      </p>
+      <Notification show={state.showCopiedText} />
     </main>
   );
 }
