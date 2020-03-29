@@ -20,6 +20,11 @@ function filter(search: string, page: number, perPage: number) {
     const [name, path] = icons[i];
     if (!name.toLocaleLowerCase().includes(search)) continue;
 
+    if (!search) {
+      res.push([name, path, name.slice(3)]);
+      continue;
+    }
+
     res.push([
       name,
       path,
