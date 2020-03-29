@@ -12,6 +12,7 @@ module.exports = {
   variants: [
     'responsive',
     'group-hover',
+    'group-focus',
     'focus-within',
     'first',
     'last',
