@@ -147,7 +147,7 @@ function App() {
                 >
                   <Icon path={path} id={id} class="w-full" />
 
-                  <div class="text-sm overflow-hidden font-semibold absolute z-20 top-full left-1/2 -translate-x-1/2 transform bg-gray-600 rounded shadow border-gray-900 group-hover:block group-focus:block group-active:block hidden">
+                  <div class="text-sm overflow-hidden font-semibold absolute z-20 top-full left-1/2 -translate-x-1/2 transform bg-gray-600 rounded shadow border-gray-900 group-hover:block group-focus:block focus-within:block hidden">
                     <p innerHTML={name} class="p-2 text-center"></p>
 
                     <div class="flex">
