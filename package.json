@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "parcel src/index.html",
-    "build": "rimraf dist && cross-env NODE_ENV=production parcel build src/index.html --no-cache"
+    "dev": "rimraf dist .parcel-cache && cross-env NODE_ENV=development parcel src/index.html",
+    "build": "rimraf dist .parcel-cache && cross-env NODE_ENV=production parcel build src/index.html --no-cache"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
