@@ -1,7 +1,7 @@
 import * as Comlink from 'comlink';
-import { createSignal } from 'solid-js';
 
-const [icons, setIcons] = createSignal([]);
+let icons = [];
+const setIcons = (newIcons: string[][]) => (icons = newIcons);
 let cachedSearch = 'NOT_INIT';
 let cachedFilteredIcons = [];
 
@@ -16,8 +16,8 @@ function filter(search: string, page: number, perPage: number) {
     ];
   }
 
-  for (let i = 0; i < icons().length; i++) {
-    const [name, path] = icons()[i];
+  for (let i = 0; i < icons.length; i++) {
+    const [name, path] = icons[i];
     if (!name.toLocaleLowerCase().includes(search)) continue;
 
     res.push([

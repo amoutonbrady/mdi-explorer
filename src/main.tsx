@@ -123,7 +123,7 @@ function App() {
           classList={{ 'opacity-0 scale-0': state.page === 0 }}
           class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
         >
-          <span>{'<'} Previous page</span>
+          <span>&lt; Previous page</span>
         </button>
 
         <div
@@ -154,7 +154,7 @@ function App() {
           }}
           class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
         >
-          <span>Next page {'>'}</span>
+          <span>Next page &gt;</span>
         </button>
       </div>
 

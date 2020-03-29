@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "build": "rimraf dist && cross-env NODE_ENV=production parcel build src/index.html --no-cache"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -12,8 +12,10 @@
     "@fullhuman/postcss-purgecss": "^2.1.0",
     "babel-plugin-jsx-dom-expressions": "^0.17.1",
     "babel-preset-solid": "^0.17.0",
-    "parcel": "^2.0.0-nightly.183",
+    "cross-env": "^7.0.2",
+    "parcel": "2.0.0-nightly.183",
     "prettier": "^2.0.2",
+    "rimraf": "^3.0.2",
     "tailwindcss": "^1.2.0",
     "typescript": "^3.9.0-beta"
   },
