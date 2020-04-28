@@ -3,7 +3,6 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "types": ["babel-plugin-jsx-dom-expressions"],
     "jsx": "preserve"
   }
 }
