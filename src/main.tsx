@@ -1,15 +1,17 @@
-import * as Comlink from 'comlink';
-import { render, For, Switch, Match } from 'solid-js/dom';
+import { For } from 'solid-js/web';
 import {
   createState,
   onError,
-  createEffect,
   createResource,
   createMemo,
+  Component,
+  Suspense,
+  createSignal,
+  createSelector,
+  createComputed,
 } from 'solid-js';
 
 import { Icon } from './components/icon';
-import { MDIWorker } from './filter.worker';
 import { Notification } from './components/notification';
 
 type EventFromInput = InputEvent & {
@@ -17,15 +19,15 @@ type EventFromInput = InputEvent & {
   target: HTMLInputElement;
 };
 
-function fetchIcons() {
-  return import('@mdi/js').then((module) => Object.entries(module));
+async function fetchIcons() {
+  const icons = await import('@mdi/js');
+  return Object.entries(icons);
 }
 
-function App() {
-  // -----
-  // STATE
-  // -----
+export const App: Component = () => {
   const [icons, loadIcons] = createResource([]);
+  loadIcons(fetchIcons);
+
   const [state, setState] = createState({
     search: '',
     loading: false,
@@ -36,27 +38,20 @@ function App() {
     filteredLength: 0,
     filteredIcons: [] as string[][],
   });
-  let loading = () => false;
 
-  // ----
-  // INIT
-  // ----
-  const worker = Comlink.wrap<MDIWorker>(new Worker('./filter.worker.ts'));
+  const [selected, setSelected] = createSignal(null, true);
+  const isSelected = createSelector(selected);
 
-  // --------
-  // COMPUTED
-  // --------
+  const worker = new Worker(new URL('./filter.worker.js', import.meta.url));
+
   const numberOfPages = createMemo(() =>
     Math.ceil(state.filteredLength / state.perPage),
   );
 
-  // -------
-  // METHODS
-  // -------
   function updateSearch({ target }: EventFromInput) {
-    setState((state) => {
-      state.search = target.value.toLocaleLowerCase();
-      state.page = 0;
+    setState({
+      search: target.value.toLocaleLowerCase(),
+      page: 0,
     });
   }
 
@@ -69,47 +64,33 @@ function App() {
     });
   }
 
-  function downloadSVG({ id = '', path = '', duration = 3000 }) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="${path}" /></svg>`;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(
-      new Blob([svg], { type: 'text/svg;charset=utf-8;' }),
-    );
-    a.download = `${id}.svg`;
-
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  function downloadSVG({ path = '', duration = 3000 }) {
+    const id = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="${path}" /></svg>`;
 
     copyToClipboard({ id, duration });
   }
 
-  // --------
-  // WATCHERS
-  // --------
-  createEffect(() => (loading = loadIcons(fetchIcons())));
-
-  createEffect(() => {
+  createComputed(() => {
     if (!icons().length) return;
 
-    worker.setIcons(icons()).then(() => setState('workerReady', true));
+    worker.postMessage({ event: 'SET_ICONS', icons: icons() });
+    setState('workerReady', true);
   });
 
-  createEffect(() => {
+  worker.addEventListener('message', ({ data }) => {
+    const [filteredIcons, filteredLength] = data;
+    setState({ filteredIcons, filteredLength });
+  });
+
+  createComputed(() => {
     if (!state.workerReady) return;
-    const now = performance.now();
 
-    worker
-      .filter(state.search, state.page, state.perPage)
-      .then(([filtered, length]: [string[][], number]) => {
-        setState((state) => {
-          state.filteredIcons = filtered;
-          state.filteredLength = length;
-        });
-
-        const then = performance.now();
-        console.log(`Filter took ${then - now}ms`);
-      });
+    worker.postMessage({
+      event: 'FILTER',
+      search: state.search,
+      page: state.page,
+      perPage: state.perPage,
+    });
   });
 
   onError(console.error);
@@ -118,107 +99,110 @@ function App() {
     <main class="container p-6 mx-auto relative">
       <h1 class="text-center text-4xl font-semibold">MDI Explorer</h1>
 
-      <Switch
-        fallback={
-          <span class="text-red-500 text-xl mt-12">An error occured...</span>
-        }
+      <Suspense
+        fallback={<p class="mt-12 text-xl text-center">Loading the icons...</p>}
       >
-        <Match when={loading()}>
-          <p class="mt-12 text-xl text-center">Loading the icons...</p>
-        </Match>
-        <Match when={!loading()}>
-          <input
-            value={state.search}
-            onInput={updateSearch}
-            class="uppercase border border-gray-700 bg-transparent rounded px-4 py-2 w-full mt-6 bg-gray-800 top-6 sticky z-20"
-            placeholder="Search an icon..."
-          />
+        <input
+          value={state.search}
+          onInput={updateSearch}
+          class="uppercase border border-gray-700 bg-transparent rounded px-4 py-2 w-full mt-6 bg-gray-800 top-6 sticky z-20"
+          placeholder="Search an icon..."
+        />
 
-          <p class="mt-3 text-right font-semibold">
-            {state.filteredLength} result(s)
-          </p>
+        <p class="mt-3 text-right font-semibold">
+          {state.filteredLength} result(s)
+        </p>
 
-          <section class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-15 gap-6 mt-12 relative z-10">
-            <For each={state.filteredIcons}>
-              {([id, path, name]) => (
-                <a
-                  href={`#/${id}`}
-                  class="relative group border border-transparent hover:border-gray-500 rounded p-1"
+        <section class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-15 gap-6 mt-12 relative z-10">
+          <For each={state.filteredIcons}>
+            {([id, path, name]) => (
+              <a
+                href={`#/${id}`}
+                class="relative group border border-transparent hover:border-gray-500 rounded p-1"
+                onClick={() => {
+                  return isSelected(id) ? setSelected(null) : setSelected(id);
+                }}
+              >
+                <Icon path={path} id={id} class="w-full" />
+
+                <div
+                  class="text-sm overflow-hidden font-semibold absolute z-20 top-full left-1/2 -translate-x-1/2 transform bg-gray-600 rounded shadow border-gray-900"
+                  classList={{
+                    block: isSelected(id),
+                    hidden: !isSelected(id),
+                  }}
                 >
-                  <Icon path={path} id={id} class="w-full" />
+                  <p innerHTML={name} class="p-2 text-center"></p>
 
-                  <div class="text-sm overflow-hidden font-semibold absolute z-20 top-full left-1/2 -translate-x-1/2 transform bg-gray-600 rounded shadow border-gray-900 group-hover:block group-focus:block focus-within:block hidden">
-                    <p innerHTML={name} class="p-2 text-center"></p>
-
-                    <div class="flex">
-                      <button
-                        onClick={[downloadSVG, { id, path }]}
-                        class="flex-1 w-full border-t-2 border-r border-gray-400 p-1 px-6 hover:bg-gray-700 active:bg-gray-800"
-                      >
-                        SVG
-                      </button>
-                      <button
-                        onClick={[copyToClipboard, { id }]}
-                        class="flex-1 w-full border-t-2 border-l border-gray-400 p-1 px-6 hover:bg-gray-700 active:bg-gray-800"
-                      >
-                        ID
-                      </button>
-                    </div>
+                  <div class="flex">
+                    <button
+                      type="button"
+                      onClick={[downloadSVG, { path }]}
+                      class="flex-1 w-full border-t-2 border-r border-gray-400 p-1 px-6 hover:bg-gray-700 active:bg-gray-800 focus:outline-none"
+                    >
+                      SVG
+                    </button>
+                    <button
+                      type="button"
+                      onClick={[copyToClipboard, { id }]}
+                      class="flex-1 w-full border-t-2 border-l border-gray-400 p-1 px-6 hover:bg-gray-700 active:bg-gray-800 focus:outline-none"
+                    >
+                      ID!!
+                    </button>
                   </div>
-                </a>
-              )}
-            </For>
-          </section>
+                </div>
+              </a>
+            )}
+          </For>
+        </section>
 
-          <div class="flex justify-between mt-20">
-            <button
-              onClick={() => setState('page', state.page - 1)}
-              disabled={state.page === 0}
-              classList={{ 'opacity-0 scale-0': state.page === 0 }}
-              class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
-            >
-              <span>&lt;</span>
-              <span class="hidden sm:inline-block">&nbsp;Previous page</span>
-            </button>
+        <div class="flex justify-between mt-20">
+          <button
+            onClick={() => setState('page', state.page - 1)}
+            disabled={state.page === 0}
+            classList={{ 'opacity-0 scale-0': state.page === 0 }}
+            class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
+          >
+            <span>&lt;</span>
+            <span class="hidden sm:inline-block">&nbsp;Previous page</span>
+          </button>
 
-            <div
-              class="text-xl font-mono flex items-center scale-1 transform transition duration-300"
-              classList={{ 'opacity-0 scale-0': numberOfPages() === 0 }}
-            >
-              <input
-                type="number"
-                name="pagination"
-                id="pagination"
-                min="1"
-                max={numberOfPages()}
-                value={state.page + 1}
-                onInput={(e) =>
-                  setState('page', Number.parseInt(e.target.value, 10) - 1)
-                }
-                class="border border-transparent hover:border-gray-700 bg-transparent rounded px-4 py-2 bg-transparent w-20 relative transform translate-x-12 hover:translate-x-0 transition duration-300"
-              />
-              <span>&nbsp;of&nbsp;</span>
-              <span>{numberOfPages()}</span>
-            </div>
-
-            <button
-              onClick={() => setState('page', state.page + 1)}
-              disabled={state.filteredIcons.length < state.perPage}
-              classList={{
-                'opacity-0 scale-0': state.filteredIcons.length < state.perPage,
-              }}
-              class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
-            >
-              <span class="hidden sm:inline-block">Next page&nbsp;</span>
-              <span>&gt;</span>
-            </button>
+          <div
+            class="text-xl font-mono flex items-center scale-1 transform transition duration-300"
+            classList={{ 'opacity-0 scale-0': numberOfPages() === 0 }}
+          >
+            <input
+              type="number"
+              name="pagination"
+              id="pagination"
+              min="1"
+              max={numberOfPages()}
+              value={state.page + 1}
+              onInput={(e) =>
+                setState('page', Number.parseInt(e.target.value, 10) - 1)
+              }
+              class="border border-transparent hover:border-gray-700 rounded px-4 py-2 bg-transparent w-20 relative transform translate-x-12 hover:translate-x-0 transition duration-300"
+            />
+            <span>&nbsp;of&nbsp;</span>
+            <span>{numberOfPages()}</span>
           </div>
-        </Match>
-      </Switch>
+
+          <button
+            type="button"
+            onClick={() => setState('page', state.page + 1)}
+            disabled={state.filteredIcons.length < state.perPage}
+            classList={{
+              'opacity-0 scale-0': state.filteredIcons.length < state.perPage,
+            }}
+            class="bg-gray-800 px-3 py-2 rounded border border-gray-700 hover:bg-gray-900 active:bg-black text-sm font-mono uppercase tracking-wide transition transform duration-300"
+          >
+            <span class="hidden sm:inline-block">Next page&nbsp;</span>
+            <span>&gt;</span>
+          </button>
+        </div>
+      </Suspense>
 
       <Notification show={state.showCopiedText} />
     </main>
   );
-}
-
-render(App, document.getElementById('app'));
+};

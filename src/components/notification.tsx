@@ -1,8 +1,6 @@
-type PropsType = {
-  show: boolean;
-};
+import type { Component } from 'solid-js';
 
-export function Notification(props: PropsType) {
+export const Notification: Component<{ show: boolean }> = (props) => {
   return (
     <p
       class="absolute top-6 right-6 px-3 py-2 font-semibold bg-green-200 text-green-800 border border-green-800 rounded shadow transition duration-300 transform z-30"
@@ -14,4 +12,4 @@ export function Notification(props: PropsType) {
       Icon copied to clipboard!
     </p>
   );
-}
+};

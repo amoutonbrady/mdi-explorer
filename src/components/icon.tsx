@@ -1,10 +1,12 @@
+import type { Component } from 'solid-js';
+
 type PropsType = {
   id?: string;
   path: string;
   class?: string;
 };
 
-export function Icon(props: PropsType) {
+export const Icon: Component<PropsType> = (props) => {
   return (
     <svg
       id={props.id}
@@ -14,4 +16,4 @@ export function Icon(props: PropsType) {
       <path d={props.path} />
     </svg>
   );
-}
+};

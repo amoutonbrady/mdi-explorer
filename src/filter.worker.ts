@@ -1,7 +1,4 @@
-import * as Comlink from 'comlink';
-
 let icons = [];
-const setIcons = (newIcons: string[][]) => (icons = newIcons);
 let cachedSearch = 'NOT_INIT';
 let cachedFilteredIcons = [];
 
@@ -43,9 +40,16 @@ function filter(search: string, page: number, perPage: number) {
   return [res.slice(start, start + perPage), res.length];
 }
 
-Comlink.expose({ filter, setIcons });
+globalThis.addEventListener('message', ({ data }) => {
+  switch (data.event) {
+    case 'SET_ICONS':
+      icons = data.icons;
+      break;
 
-export type MDIWorker = {
-  filter: typeof filter;
-  setIcons: typeof setIcons;
-};
+    case 'FILTER':
+      const filteredIcons = filter(data.search, data.page, data.perPage);
+      // @ts-ignore
+      globalThis.postMessage(filteredIcons);
+      break;
+  }
+});
